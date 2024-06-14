@@ -1,0 +1,38 @@
+
+services:
+  python: &python
+    container_name: python_instance
+    build: 
+      context: .
+      target: base
+    image: python_image
+    volumes:
+      - .:/code
+    entrypoint: /bin/bash
+  pex: &pex_base
+    build: 
+      context: .
+      target: builder
+    container_name: pex_base
+    image: pex_base_image
+    volumes:
+      - .:/code
+    entrypoint: pex
+  fastapi:
+    <<: *python
+    container_name: fastapi
+    hostname: fastapi
+    volumes:
+      - ./binaries:/code
+    ports:
+      - "8000:8000"
+    entrypoint: ["./fastapi_app.pex"]
+  uvicorn:
+    <<: *python
+    container_name: uvicorn
+    hostname: uvicorn
+    volumes:
+      - ./binaries:/code
+    ports:
+      - "8000:8000"
+    entrypoint: ["./uvicorn.pex", "app.main:app", "--host", "uvicorn"]
