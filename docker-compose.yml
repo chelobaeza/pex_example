@@ -32,7 +32,7 @@ services:
     container_name: uvicorn
     hostname: uvicorn
     volumes:
-      - ./binaries:/code
+      - .:/code
     ports:
       - "8000:8000"
-    entrypoint: ["./uvicorn.pex", "app.main:app", "--host", "uvicorn"]
+    entrypoint: ["./binaries/uvicorn.pex", "src.app.main:app", "--host", "uvicorn"]

@@ -1,15 +1,16 @@
-# Running example
+# PEX Running example
 
-Running a FastApi app encapsulating dependencies inside Pex
+Running a FastApi app encapsulating dependencies inside [Pex](https://docs.pex-tool.org/).
+
 
 ## Standalone FastApi app
 
 Build the pex file with the app
 ```bash
-docker compose run --rm pex ./fastapi_app -c uvicorn --inject-args 'fastapi_app.app.main:app --host fastapi' -o fastapi_app.pex
+docker compose run --rm pex . -c uvicorn --inject-args 'app.main:app --host fastapi' -o binaries/fastapi_app.pex
 ```
-- Running `pex ./fastapi_app` will install the fastapi_app as a package with all source code needed.
-`--inject-args 'fastapi_app.app.main:app --host fastapi'` are arguments only for build time.
+- Running `pex .` will install the fastapi_app as a package with all source code needed.
+with `-c` uvicorn command will be ran as the entrypoint with `--inject-args` arguments.
 
 Run the app using the pex binary
 ```bash
@@ -19,16 +20,26 @@ The uvicorn server will start and serve on http://localhost:8000/
 
 **note**: the `fastapi` compose runs on a clean python container with deps installed and **without** sources
 
-## packaging App dependencies - not the source code
+## Packaging App dependencies - not the source code
+The difference is not to install the app as a package.
 
 Build the pex file with deps
 ```bash
-docker compose run --rm pex ./fastapi_app -c uvicorn -o binaries/uvicorn.pex
+docker compose run --rm pex -r requirements.txt -c uvicorn -o binaries/uvicorn.pex
 ```
 Start the server
 ```bash
 docker compose up uvicorn
 ```
+**notes**:
+
+uvicorn compose entrypoint: 
+```yaml
+entrypoint: ["./binaries/uvicorn.pex", "src.app.main:app", "--host", "uvicorn"]
+```
+source code is needed, thats why the app path changed `src.app.main:app` and the volume now binds the root dir.
+
+This approach is mode useful for commands or just using differente arguments with the same binary
 
 # Pex
 
@@ -36,7 +47,7 @@ docker compose up uvicorn
 
 distribute the app with deps with pex
 ```bash
-docker compose run --rm pex ./fastapi_app -o ./binaries/env.pex
+docker compose run --rm pex . -o ./binaries/env.pex
 ```
 then:
 ```
@@ -47,19 +58,3 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> import app
 >>>
 ```
-
-
-## other ways of using pex
-Running the binary with arguments
-```bash
-pex . fastapi uvicorn -c uvicorn -o fastapi_app.pex
-./fastapi_app.pex app.main:app
-```
-
-Inject all necessary arguments into the binary
-```bash
-pex . -r requirements.txt -c uvicorn --inject-args 'app.main:app' -o fastapi_app.pex
-./fastapi_app.pex
-```
-
-**note**: the `.` is not a typo. We are installing our sources into pex as well for portability :)
